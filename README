@@ -1,0 +1,75 @@
+FCGI-Daemon version 0.20110419_01
+::::::::::::::::::::::::::::::::
+
+FCGI::Daemon is a small FastCGI server useful for nginx web server.
+
+It features 
+    * setrlimit for RLIMIT_AS and RLIMIT_CPU
+    * DOing - run CGI *.pl scripts with persistent interpreter (like mod_perl).
+    * detection of memory leaks
+    * drop privileges when run as root
+    * detection of script executable in path (to run CGI apps like fossil)
+
+It was developed as replacement for cgiwrap-fcgi.pl ( see http://wiki.nginx.org/SimpleCGI )
+
+Pretty much as mod_perl it accelerate CGI scripts written in Perl (*.pl) due to persistent interpreter.
+
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+FCGI-Daemon depends on FCGI and FCGI::ProcManager
+
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc FCGI::Daemon
+
+You can also look for information at:
+
+    RT, CPAN's request tracker
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=FCGI-Daemon
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/FCGI-Daemon
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/FCGI-Daemon
+
+    Search CPAN
+        http://search.cpan.org/dist/FCGI-Daemon/
+
+
+AUTHOR
+
+Dmitry Smirnov, C<< <onlyjob at cpan.org> >>
+
+
+LICENSE AND COPYRIGHT
+
+Copyright (C) 2011 Free Software Foundation
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+See http://dev.perl.org/licenses/ for more information.
+

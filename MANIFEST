@@ -1,0 +1,13 @@
+Changes
+MANIFEST
+Makefile.PL
+README
+LICENSE
+lib/FCGI/Daemon.pm
+t/00-load.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
+examples/Debian/etc/default/fcgi-daemon
+examples/Debian/etc/init.d/fcgi-daemon
+META.yml                                 Module meta-data (added by MakeMaker)
