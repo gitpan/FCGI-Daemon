@@ -18,27 +18,19 @@ FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web se
 
 =head1 VERSION
 
-Version 0.20110420_01
+Version 0.20110420_02
 
 =cut
 
-our $VERSION = '0.20110420_01';
+our $VERSION = '0.20110420_02';
 my %o;
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
 
-=for comment
-
-=head2 help()
-    print help screen extracted from POD
-=cut
+# print help screen extracted from POD
 sub help { pod2usage(-verbose=>$ARG[0],-noperldoc=>1) and exit; }
 
-=for comment
-
-=head2 run()
-    Modulino-style main routine
-=cut
+# Modulino-style main routine
 sub run {
     getopts('hde:q:p:s:g:u:m:c:l:w:',\%o) or help(0);
     help(2) if $o{'h'};
@@ -58,11 +50,7 @@ sub run {
     }
 
 
-=for comment
-
-=head2 dieif()
-    exit handler
-=cut
+    # exit handler
     sub dieif { 
         if($ARG[0]){
             my $err=$ARG[1];
@@ -244,11 +232,7 @@ sub FCGI::ProcManager::pm_change_process_name {
         $0=$p{$name} if $p{$name} ne '';
 }
 
-=for comment 
-
-=head2 get_file_from_path()
-    Find first file in path
-=cut
+# Find first file in path
 sub get_file_from_path {
     local $_=shift;
     my $file='';

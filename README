@@ -1,4 +1,4 @@
-FCGI-Daemon version 0.20110419_01
+FCGI-Daemon version 0.20110420_02
 ::::::::::::::::::::::::::::::::
 
 FCGI::Daemon is a small FastCGI server useful for nginx web server.

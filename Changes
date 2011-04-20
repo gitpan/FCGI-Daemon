@@ -1,7 +1,7 @@
 Revision history for FCGI-Daemon
 
-0.200110420_01  2011-04-20
-		Minor POD update for POD::Coverage test
+0.200110420_02  2011-04-20
+		Minor POD update
 
 0.200110419_01  2011-04-19
 		First version released.
