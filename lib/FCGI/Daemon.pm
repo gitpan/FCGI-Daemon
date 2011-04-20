@@ -11,7 +11,6 @@ use strict;
 #use diagnostics -verbose;
 use Getopt::Std;
 use autouse 'Pod::Usage'=>qw(pod2usage);
-sub help { pod2usage(-verbose=>$ARG[0],-noperldoc=>1) and exit; }
 
 =head1 NAME
 
@@ -19,17 +18,27 @@ FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web se
 
 =head1 VERSION
 
-Version 0.20110419_01
+Version 0.20110420_01
 
 =cut
 
-our $VERSION = '0.20110419_01';
+our $VERSION = '0.20110420_01';
 my %o;
-
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
 
+=for comment
 
+=head2 help()
+    print help screen extracted from POD
+=cut
+sub help { pod2usage(-verbose=>$ARG[0],-noperldoc=>1) and exit; }
+
+=for comment
+
+=head2 run()
+    Modulino-style main routine
+=cut
 sub run {
     getopts('hde:q:p:s:g:u:m:c:l:w:',\%o) or help(0);
     help(2) if $o{'h'};
@@ -48,6 +57,12 @@ sub run {
         $o{uid}=$o{u}||'www-data'; $o{uid_num}=scalar getpwnam($o{uid});
     }
 
+
+=for comment
+
+=head2 dieif()
+    exit handler
+=cut
     sub dieif { 
         if($ARG[0]){
             my $err=$ARG[1];
@@ -77,19 +92,6 @@ sub run {
         umask 022;
     }
 
-    main();
-}
-
-# overriding process names for sysv script in /etc/init.d
-sub FCGI::ProcManager::pm_change_process_name { 
-        my ($self,$name)=@_;
-        my %p=( 'perl-fcgi-pm'  =>'FCGI::Daemon',
-                'perl-fcgi'     =>'FCGI::Daemon-worker',
-        );
-        $0=$p{$name} if $p{$name} ne '';
-}
-
-sub main {
     my %req_env;
     $o{fcgi_pm}=FCGI::ProcManager->new({n_processes=>$o{prefork},
                                         die_timeout=>28,
@@ -233,6 +235,20 @@ sub main {
     }
 }
 
+# overriding process names
+sub FCGI::ProcManager::pm_change_process_name { 
+        my ($self,$name)=@_;
+        my %p=( 'perl-fcgi-pm'  =>'FCGI::Daemon',
+                'perl-fcgi'     =>'FCGI::Daemon-worker',
+        );
+        $0=$p{$name} if $p{$name} ne '';
+}
+
+=for comment 
+
+=head2 get_file_from_path()
+    Find first file in path
+=cut
 sub get_file_from_path {
     local $_=shift;
     my $file='';
@@ -250,50 +266,50 @@ __END__
 
 =head1 SYNOPSIS
 
-This is modulino i.e. executable FastCGI daemon.
+This is executable FastCGI daemon i.e. modulino.
 
 =head1 DESCRIPTION
 
-    FCGI::Daemon is a small (Fast)CGI server for use as CGI-wrapper for
-    unmodified CGI applications. 
-    
-    Factored as modulino, currently it doesn't have any Perl module functionality.
-    
-    It was developed as replacement for cgiwrap-fcgi.pl ( see http://wiki.nginx.org/SimpleCGI )
-    
+FCGI::Daemon is a small (Fast)CGI server for use as CGI-wrapper for
+unmodified CGI applications. 
+
+Factored as modulino, currently it doesn't have any Perl module functionality.
+
+It was developed as replacement for cgiwrap-fcgi.pl ( see http://wiki.nginx.org/SimpleCGI )
+
 =head1 FEATURES
 
-    * setrlimit for RLIMIT_AS and RLIMIT_CPU
-    * DOing .pl - run CGI scripts in Perl with persistent interpreter (like mod_perl).
-    * detection of memory leaks
-    * drop privileges when run as root
-    * detection of script executable in path (to run CGI apps like fossil)
+  * setrlimit for RLIMIT_AS and RLIMIT_CPU
+  * DOing .pl - run CGI scripts in Perl with persistent interpreter (like mod_perl).
+  * detection of memory leaks
+  * drop privileges when run as root
+  * detection of script executable in path (to run CGI apps like fossil)
 
 =cut
 
 =head1 USAGE
 
-    It can be manually invoked as "perl /usr/share/perl5/FCGI/Daemon.pm"
-    or with included SysV init script.
-    
-    Please make sure that user have write permissions for sock file.
+It can be manually invoked as "perl /usr/share/perl5/FCGI/Daemon.pm"
+or with included SysV init script.
+
+Please make sure that user have write permissions for sock file.
 
 =head1 OPTIONS
 
 Options: (default arguments given for convenience)
 
-    -h                              # brief help message
-    -w 1                            # number of preforked processes (workers)
-    -q 96                           # max queue
-    -m 512                          # RLIMIT_AS in MiB (see setrlimit)
-    -c 32                           # RLIMIT_CPU in seconds (see setrlimit)
-    -e 10240                        # max evals before process restart. 0 disables DOing perl scripts.
-    -l 1.3                          # memory leak threshold
-    -p /var/run/fcgid.pid           # write pId (process ID) to given file (only if daemonize)
-    -s /var/run/fcgid.sock          # socket file for Fast CGI communication
-    -u www-data                     # user name to become (if run as root)
-    -g www-data                     # group name to become (if run as root)
-    -d                              # daemonize (run in background)
+  -h                              # brief help message
+  -w 1                            # number of preforked processes (workers)
+  -q 96                           # max queue
+  -m 512                          # RLIMIT_AS in MiB (see setrlimit)
+  -c 32                           # RLIMIT_CPU in seconds (see setrlimit)
+  -e 10240                        # max evals before process restart. 0 disables DOing perl scripts.
+  -l 1.3                          # memory leak threshold
+  -p /var/run/fcgid.pid           # write pId (process ID) to given file (only if daemonize)
+  -s /var/run/fcgid.sock          # socket file for Fast CGI communication
+  -u www-data                     # user name to become (if run as root)
+  -g www-data                     # group name to become (if run as root)
+  -d                              # daemonize (run in background)
 
 =over 4
 
@@ -315,14 +331,14 @@ This is helpful for scripts that are leaking memory
 
 =head1 PREREQUISITES
 
-    FCGI
-    FCGI::ProcManager
+FCGI
+FCGI::ProcManager
 
-    For Debian GNU/Linux (perhaps the best platform)
-    required moduled provided by the following packages:
-    
-    libfcgi-perl
-    libfcgi-procmanager-perl
+For Debian GNU/Linux (perhaps the best platform)
+required moduled provided by the following packages:
+
+libfcgi-perl
+libfcgi-procmanager-perl
 
 =head1 COMPATIBILITY
 
@@ -345,14 +361,14 @@ Perl scripts can cache persistent data in $_{$0}->{mydata}
 However if you store too much data it may trigger termination by rlimit
 After DO/EVAL $_{$0}->{'SIGTERM'} being called so termination handler 
 can be used to close DB connections etc.
-    
+
     $_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
 
 =head1 FAQ
 
 Why not fcgiwrap?
     fcgiwrap doesn't pass STDERR to web server for logging.
-        
+
 What's wrong with cgiwrap-fcgi.pl?  http://wiki.nginx.org/SimpleCGI
     Well, many things... 
         * It can't DO perl scripts.
