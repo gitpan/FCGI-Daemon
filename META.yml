@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               FCGI-Daemon
-version:            0.20110420_02
+version:            0.20110421
 abstract:           an easy to use FastCGI daemon which can be used with nginx web server.
 author:
     - Dmitry Smirnov <onlyjob@cpan.org>

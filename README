@@ -1,4 +1,4 @@
-FCGI-Daemon version 0.20110420_02
+FCGI-Daemon version 0.20110421
 ::::::::::::::::::::::::::::::::
 
 FCGI::Daemon is a small FastCGI server useful for nginx web server.
@@ -26,6 +26,7 @@ To install this module, run the following commands:
 
 FCGI-Daemon depends on FCGI and FCGI::ProcManager
 
+Debian packages available from http://sites.google.com/site/onlyjob/fcgi-daemon
 
 SUPPORT AND DOCUMENTATION
 

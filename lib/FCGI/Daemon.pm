@@ -18,11 +18,11 @@ FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web se
 
 =head1 VERSION
 
-Version 0.20110420_02
+Version 0.20110421
 
 =cut
 
-our $VERSION = '0.20110420_02';
+our $VERSION = '0.20110421';
 my %o;
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
@@ -323,6 +323,11 @@ required moduled provided by the following packages:
 
 libfcgi-perl
 libfcgi-procmanager-perl
+
+=head1 INSTALLATION
+
+On Debian GNU/Linux easiest way to install is to use packages
+available from http://sites.google.com/site/onlyjob/fcgi-daemon
 
 =head1 COMPATIBILITY
 
