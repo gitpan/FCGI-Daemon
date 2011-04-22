@@ -18,11 +18,11 @@ FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web se
 
 =head1 VERSION
 
-Version 0.20110421
+Version 0.20110422
 
 =cut
 
-our $VERSION = '0.20110421';
+our $VERSION = '0.20110422';
 my %o;
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
@@ -259,7 +259,7 @@ unmodified CGI applications.
 
 Factored as modulino, currently it doesn't have any Perl module functionality.
 
-It was developed as replacement for cgiwrap-fcgi.pl ( see http://wiki.nginx.org/SimpleCGI )
+It was developed as replacement for cgiwrap-fcgi.pl - see L<http://wiki.nginx.org/SimpleCGI>
 
 =head1 FEATURES
 
@@ -327,7 +327,7 @@ libfcgi-procmanager-perl
 =head1 INSTALLATION
 
 On Debian GNU/Linux easiest way to install is to use packages
-available from http://sites.google.com/site/onlyjob/fcgi-daemon
+available from L<http://sites.google.com/site/onlyjob/fcgi-daemon>
 
 =head1 COMPATIBILITY
 
@@ -336,13 +336,13 @@ Windows is NOT supported.
 
 =head1 NGINX configuration (sample)
 
-    location ~ ^/(cgi-)?bin/.*$ {
-        expires epoch;
-        gzip off;
-        include /etc/nginx/fastcgi_params;
-        fastcgi_param   SCRIPT_FILENAME $request_filename;
-        fastcgi_pass    unix:/var/run/fcgid.sock;
-    }
+ location ~ ^/(cgi-)?bin/.*$ {
+    expires epoch;
+    gzip off;
+    include /etc/nginx/fastcgi_params;
+    fastcgi_param   SCRIPT_FILENAME $request_filename;
+    fastcgi_pass    unix:/var/run/fcgid.sock;
+ }
 
 =head1 NOTES
 
@@ -351,24 +351,34 @@ However if you store too much data it may trigger termination by rlimit
 After DO/EVAL $_{$0}->{'SIGTERM'} being called so termination handler 
 can be used to close DB connections etc.
 
-    $_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
+$_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
 
 =head1 FAQ
 
-Why not fcgiwrap?
-    fcgiwrap doesn't pass STDERR to web server for logging.
+B<Why not fcgiwrap?>
 
-What's wrong with cgiwrap-fcgi.pl?  http://wiki.nginx.org/SimpleCGI
-    Well, many things... 
-        * It can't DO perl scripts.
-        * It is written in a strange way which is hard to read and understand.
-          Frankly, it is not very beautiful.
-        * It takes no options so you have to modify the code.
-        * It is incompatible with some CGI applications, notably with fossil.
+=over
 
-=head1 AUTHOR
+=item fcgiwrap doesn't pass STDERR to web server for logging.
 
-Dmitry Smirnov, C<< <onlyjob at cpan.org> >>
+=back
+
+B<What's wrong with cgiwrap-fcgi.pl?>  L<http://wiki.nginx.org/SimpleCGI>
+
+=over
+
+=item Well, many things... 
+
+=item - It can't DO perl scripts.
+
+=item - It is written in a strange way which is hard to read and understand.
+Frankly, it is not very beautiful.
+
+=item - It takes no options so you have to modify the code.
+
+=item - It is incompatible with some CGI applications, notably with fossil.
+
+=back
 
 =head1 BUGS
 
@@ -376,8 +386,9 @@ Please report any bugs or feature requests to C<bug-fcgi-daemon at rt.cpan.org>,
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=FCGI-Daemon>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
-During development of this module a bug in Perl was discovered: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=600376
-http://rt.perl.org/rt3//Public/Bug/Display.html?id=78436
+During development of this module a bug in Perl was discovered:
+    L<http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=600376>
+    L<http://rt.perl.org/rt3//Public/Bug/Display.html?id=78436>
 
 =head1 SUPPORT
 
@@ -403,23 +414,27 @@ You can also look for information at:
 
 =back
 
+=head1 AUTHOR
+
+Dmitry Smirnov, C<< <onlyjob at cpan.org> >>
+
 =head1 LICENSE
 
-    FCGI::Daemon - FastCGI daemon
-    Copyright (C) 2011 Free Software Foundation
+FCGI::Daemon - FastCGI daemon
+Copyright (C) 2011 Free Software Foundation
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =cut
 

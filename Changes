@@ -1,5 +1,8 @@
 Revision history for FCGI-Daemon
 
+0.200110422     2011-04-22
+        Minor POD update
+
 0.200110421     2011-04-21
         Added link to native Debian packages
 
