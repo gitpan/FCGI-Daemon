@@ -1,14 +1,30 @@
-Revision history for FCGI-Daemon
+FCGI-Daemon (0.200111014)
 
-0.200110422     2011-04-22
-        Minor POD update
+  * Print error to STDERR if DOable script dies
+  * POD coverage test and comments
 
-0.200110421     2011-04-21
-        Added link to native Debian packages
+-- 2011-10-14
 
-0.200110420_02  2011-04-20
-        Minor POD update
+FCGI-Daemon (0.200110422)
 
-0.200110419_01  2011-04-19
-        First version released.
+  * Minor POD update
 
+-- 2011-04-22
+
+FCGI-Daemon (0.200110421)
+
+  * Added link to native Debian packages
+
+-- 2011-04-21
+
+FCGI-Daemon (0.200110420_02)
+
+  * Minor POD update
+
+-- 2011-04-20
+
+FCGI-Daemon (0.200110419_01)
+
+  * First version released.
+
+-- 2011-04-19

@@ -3,7 +3,7 @@ package FCGI::Daemon;
 BEGIN {
     use English '-no_match_vars';
     eval q{use FCGI 0.71; use FCGI::ProcManager 0.18;};
-    print {*STDERR} $EVAL_ERROR."## Perhaps you need to have qw(libfcgi-perl libfcgi-procmanager-perl) installed?\n" and exit 1 if $EVAL_ERROR; 
+    print {*STDERR} $EVAL_ERROR."## Perhaps you need to have qw(libfcgi-perl libfcgi-procmanager-perl) installed?\n" and exit 1 if $EVAL_ERROR;
 }
 use 5.008;
 use strict;
@@ -18,19 +18,24 @@ FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web se
 
 =head1 VERSION
 
-Version 0.20110422
+Version 0.20111014
 
+=begin comment
 =cut
 
-our $VERSION = '0.20110422';
+our $VERSION = '0.20111014';
 my %o;
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
 
-# print help screen extracted from POD
+=head2 help()
+    print help screen extracted from POD
+=cut
 sub help { pod2usage(-verbose=>$ARG[0],-noperldoc=>1) and exit; }
 
-# Modulino-style main routine
+=head2 run()
+    Modulino-style main routine
+=cut
 sub run {
     getopts('hde:q:p:s:g:u:m:c:l:w:',\%o) or help(0);
     help(2) if $o{'h'};
@@ -49,22 +54,23 @@ sub run {
         $o{uid}=$o{u}||'www-data'; $o{uid_num}=scalar getpwnam($o{uid});
     }
 
-
-    # exit handler
-    sub dieif { 
+=head2 dieif()
+    exit handler
+=cut
+    sub dieif {
         if($ARG[0]){
             my $err=$ARG[1];
             unlink @o{'pidfile','sockfile'};
             print "Error - $err:\n",$ARG[0],"\n";
             exit 1;
-        }   
+        }
     }
 
     $SIG{INT}=$SIG{TERM}=sub{   # actually FCGI::ProcManager override our TERM handler so .sock and .pid files will be removed only by sysv script... :(
                             $o{fcgi_pm}->pm_remove_pid_file() if $o{fcgi_pm};
-                            unlink @o{'sockfile','pidfile'}; 
+                            unlink @o{'sockfile','pidfile'};
                             $o{fcgi_pm}->pm_die() if $o{fcgi_pm};   #pm_die() does not return
-                            exit 0; 
+                            exit 0;
                          };
 
     # daemonize
@@ -141,11 +147,15 @@ sub run {
                 local *CORE::GLOBAL::exit=sub { die 'notreallyexit'; };
                 local $0=$req_env{SCRIPT_FILENAME};     #fixes FindBin (in English $0 means $PROGRAM_NAME)
                 do $0;                                  # do $0; could be enough for strict scripts
+                if($EVAL_ERROR){
+                    $EVAL_ERROR=~s{\n+\z}{};
+                    print {*STDERR} "$0\n$EVAL_ERROR\n\b";
+                }
             }
 
             $_{$req_env{SCRIPT_FILENAME}}->{SIGTERM}() if defined $_{$req_env{SCRIPT_FILENAME}}->{SIGTERM};
 
-            foreach(keys %main::){                      # cleanup garbage after do() 
+            foreach(keys %main::){                      # cleanup garbage after do()
                 next if exists $allvars{$_};
                 next if m{::$};
                 next if m{^_};
@@ -169,7 +179,7 @@ sub run {
             exit unless --$o{max_evals};
             next REQ_LOOP;
         }
-        
+
         # Normal CGI processing
         $o{fcgi_pm}->pm_pre_dispatch();
         local $OUTPUT_AUTOFLUSH=1;  # select below is equivalent of: my $oldfh=select($CERR); $|=1; select($oldfh);
@@ -186,8 +196,8 @@ sub run {
 
         unless($pid){   #### Child ####
             close $PIN;     # <--perhaps not really necessary
-            open *STDIN,'<&=',$CIN   or die 'unable to reopen STDIN';   
-            open *STDERR,'>&=',$CERR or die 'unable to reopen STDERR';  
+            open *STDIN,'<&=',$CIN   or die 'unable to reopen STDIN';
+            open *STDERR,'>&=',$CERR or die 'unable to reopen STDERR';
             exec $req_env{'SCRIPT_FILENAME'} or die "exec failed";     # running the cgi app (exec does not return so child terminates here)
         }else{          #### Parent ####
             close $CIN;             # <--perhaps not really necessary
@@ -195,9 +205,9 @@ sub run {
             $rqst->Attach();        #reattach FCGI's STDIN,STDOUT,STDERR
 
             ## send STDIN to child
-            my $buffer;  
+            my $buffer;
             #print {$PIN} $buffer while (read *STDIN,$buffer,$ENV{'CONTENT_LENGTH'});   ## longer version below may be safer for very long input.
-            if($req_env{'REQUEST_METHOD'} eq 'POST' and $req_env{'CONTENT_LENGTH'}!=0){ 
+            if($req_env{'REQUEST_METHOD'} eq 'POST' and $req_env{'CONTENT_LENGTH'}!=0){
                 my $bytes=0;
                 while ($bytes<$req_env{'CONTENT_LENGTH'}){
                         $bytes+=read *STDIN,$buffer,($req_env{'CONTENT_LENGTH'}-$bytes);
@@ -224,7 +234,7 @@ sub run {
 }
 
 # overriding process names
-sub FCGI::ProcManager::pm_change_process_name { 
+sub FCGI::ProcManager::pm_change_process_name {
         my ($self,$name)=@_;
         my %p=( 'perl-fcgi-pm'  =>'FCGI::Daemon',
                 'perl-fcgi'     =>'FCGI::Daemon-worker',
@@ -232,7 +242,9 @@ sub FCGI::ProcManager::pm_change_process_name {
         $0=$p{$name} if $p{$name} ne '';
 }
 
-# Find first file in path
+=head2 get_file_from_path()
+    Find first file in path
+=cut
 sub get_file_from_path {
     local $_=shift;
     my $file='';
@@ -244,9 +256,10 @@ sub get_file_from_path {
 $file;
 }
 
-1; 
+1;
 __END__
 
+=end comment
 
 =head1 SYNOPSIS
 
@@ -255,7 +268,7 @@ This is executable FastCGI daemon i.e. modulino.
 =head1 DESCRIPTION
 
 FCGI::Daemon is a small (Fast)CGI server for use as CGI-wrapper for
-unmodified CGI applications. 
+unmodified CGI applications.
 
 Factored as modulino, currently it doesn't have any Perl module functionality.
 
@@ -299,14 +312,14 @@ Options: (default arguments given for convenience)
 
 =item B<-e>
 
-By default FCGI::Daemon DOing .pl scripts up to B<-e> times. 
+By default FCGI::Daemon DOing .pl scripts up to B<-e> times.
 This is several times faster than invoking Perl for every call of CGI script.
 This option define how often parent process should restart.
 Warning - some scripts may be incompatible with this so disable with "-e0" if necessary.
 
 =item B<-l>
 
-In DOing mode ( i.e. max_evals > 0 ) worker process terminates if 
+In DOing mode ( i.e. max_evals > 0 ) worker process terminates if
 upon CGI execution VmSize/VmRSS < leak treshold.
 
 This is helpful for scripts that are leaking memory
@@ -348,7 +361,7 @@ Windows is NOT supported.
 
 Perl scripts can cache persistent data in $_{$0}->{mydata}
 However if you store too much data it may trigger termination by rlimit
-After DO/EVAL $_{$0}->{'SIGTERM'} being called so termination handler 
+After DO/EVAL $_{$0}->{'SIGTERM'} being called so termination handler
 can be used to close DB connections etc.
 
 $_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
@@ -367,7 +380,7 @@ B<What's wrong with cgiwrap-fcgi.pl?>  L<http://wiki.nginx.org/SimpleCGI>
 
 =over
 
-=item Well, many things... 
+=item Well, many things...
 
 =item - It can't DO perl scripts.
 

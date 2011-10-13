@@ -1,9 +1,9 @@
-FCGI-Daemon version 0.20110422
-::::::::::::::::::::::::::::::::
+FCGI-Daemon version 0.20111014
+------------------------------
 
 FCGI::Daemon is a small FastCGI server useful for nginx web server.
 
-It features 
+It features
     * setrlimit for RLIMIT_AS and RLIMIT_CPU
     * DOing - run CGI *.pl scripts with persistent interpreter (like mod_perl).
     * detection of memory leaks
