@@ -1,10 +1,9 @@
 #!/usr/bin/perl
 package FCGI::Daemon;
-BEGIN {
-    use English '-no_match_vars';
-    eval q{use FCGI 0.71; use FCGI::ProcManager 0.18;};
-    print {*STDERR} $EVAL_ERROR."## Perhaps you need to have qw(libfcgi-perl libfcgi-procmanager-perl) installed?\n" and exit 1 if $EVAL_ERROR;
-}
+our $VERSION = '0.20111121';
+use English '-no_match_vars';
+use FCGI 0.71;                          # on Debian available as libfcgi-perl
+use FCGI::ProcManager 0.18;             # on Debian available as libfcgi-procmanager-perl
 use 5.008;
 use strict;
 #use warnings;
@@ -14,16 +13,15 @@ use autouse 'Pod::Usage'=>qw(pod2usage);
 
 =head1 NAME
 
-FCGI::Daemon - an easy to use FastCGI daemon which can be used with nginx web server.
+FCGI::Daemon - Perl-aware Fast CGI daemon for use with nginx web server.
 
 =head1 VERSION
 
-Version 0.20111014
+Version 0.20111121
 
 =begin comment
 =cut
 
-our $VERSION = '0.20111014';
 my %o;
 
 __PACKAGE__->run() unless caller();     # modulino i.e. executable rather than module
@@ -37,16 +35,17 @@ sub help { pod2usage(-verbose=>$ARG[0],-noperldoc=>1) and exit; }
     Modulino-style main routine
 =cut
 sub run {
-    getopts('hde:q:p:s:g:u:m:c:l:w:',\%o) or help(0);
+    getopts('hde:f:q:p:s:g:u:m:c:l:w:',\%o) or help(0);
     help(2) if $o{'h'};
 
-    $o{sockfile}=$o{'s'}||'/var/run/fcgid.sock';
-    $o{pidfile}=$o{'p'}||'/var/run/fcgid.pid' if $o{'d'};
+    $o{sockfile}=$o{'s'}||'/var/run/fcgi-daemon.sock';
+    $o{pidfile}=$o{'p'}||'/var/run/fcgi-daemon.pid' if $o{'d'};
     $o{prefork}=defined $o{'w'} ? $o{'w'} : 1;
     $o{queue}=defined $o{'q'} ? $o{'q'} : 96;
     $o{rlimit_vmem}=($o{'m'}||512)*1024*1024;
     $o{rlimit_cpu}=$o{'c'}||32;
     $o{max_evals}=defined $o{'e'} ? $o{'e'} : 10240;   #max evals before exit - paranoid to free memory if leaks
+    $o{file_pattern}=$o{'f'}||qr{\.pl};
     $o{leak_threshold}=$o{'l'}||1.3;
 
     if($REAL_USER_ID==$EFFECTIVE_USER_ID and $EFFECTIVE_USER_ID==0){        # if run as root
@@ -131,8 +130,10 @@ sub run {
 
         # check if script (exacutable, readable, non-zero size)
         unless(-x -s -r $req_env{'SCRIPT_FILENAME'}){
-            print "Content-type: text/plain\r\n\r\n"
-            ."Error: No such CGI app - $req_env{SCRIPT_FILENAME} may not exist or is not executable by this process.\n";
+            print "Content-type: text/plain\r\n\r\n";
+            $_="Error: No such CGI app - $req_env{SCRIPT_FILENAME} may not exist or is not executable by this process.\n";
+            print $_;
+            print {*STDERR} $_;
             next;
         }
 
@@ -140,20 +141,27 @@ sub run {
         chdir $1 if $req_env{'SCRIPT_FILENAME'}=~m{^(.*)\/};   # cd to the script's local directory
 
         # Fast Perl-CGI processing
-        if($o{max_evals}>0 and $req_env{'SCRIPT_FILENAME'}=~m{\.pl\z}){   # detect if perl script
+        if($o{max_evals}>0 and $req_env{'SCRIPT_FILENAME'}=~m{$o{file_pattern}\z}){   # detect if perl script
             my %allvars;
             @allvars{keys %main::}=();
             {
-                local *CORE::GLOBAL::exit=sub { die 'notreallyexit'; };
+                local *CORE::GLOBAL::exit=sub { die 'notr3a11yeXit' };
                 local $0=$req_env{SCRIPT_FILENAME};     #fixes FindBin (in English $0 means $PROGRAM_NAME)
+                no strict;                              # default for Perl5
                 do $0;                                  # do $0; could be enough for strict scripts
                 if($EVAL_ERROR){
                     $EVAL_ERROR=~s{\n+\z}{};
-                    print {*STDERR} "$0\n$EVAL_ERROR\n\b";
+                    print {*STDERR} "$0\n$EVAL_ERROR\n\b" unless $EVAL_ERROR =~ m{^notr3a11yeXit};
                 }
             }
 
-            $_{$req_env{SCRIPT_FILENAME}}->{SIGTERM}() if defined $_{$req_env{SCRIPT_FILENAME}}->{SIGTERM};
+            #untested experimental callback to execute on script exit
+            #$_{$req_env{SCRIPT_FILENAME}}->{SIGTERM}() if defined $_{$req_env{SCRIPT_FILENAME}}->{SIGTERM};
+			#Perl scripts can cache persistent data in $_{$0}->{mydata}
+			#However if you store too much data it may trigger termination by rlimit
+			#After DO/EVAL $_{$0}->{'SIGTERM'} is being called so termination handler
+			#can be used to close DB connections etc.
+			#$_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
 
             foreach(keys %main::){                      # cleanup garbage after do()
                 next if exists $allvars{$_};
@@ -171,7 +179,7 @@ sub run {
                 close $STAT;
                 # check if child takes too much resident memory and terminate if necessary
                 if($stat{VmSize}/$stat{VmRSS}<$o{leak_threshold}){
-                    print {*STDERR} 'fcgid :: terminating child - memory leak? '
+                    print {*STDERR} 'fcgi-daemon :: terminating child - memory leak? '
                     ."VmSize:$stat{VmSize}; VmRSS:$stat{VmRSS}; Ratio:".$stat{VmSize}/$stat{VmRSS};
                     exit;
                 }
@@ -263,24 +271,37 @@ __END__
 
 =head1 SYNOPSIS
 
-This is executable FastCGI daemon i.e. modulino.
+This is executable FastCGI daemon i.e. modulino (it doesn't have any
+Perl-module functionality).
 
 =head1 DESCRIPTION
 
-FCGI::Daemon is a small (Fast)CGI server for use as CGI-wrapper for
-unmodified CGI applications.
+FCGI::Daemon is a small FastCGI server for use as CGI-wrapper for
+CGI applications.
 
-Factored as modulino, currently it doesn't have any Perl module functionality.
+Like mod_perl FCGI-Daemon stay persistent in memory and accelerate
+unmodified CGI applications written in Perl. 
 
-It was developed as replacement for cgiwrap-fcgi.pl - see L<http://wiki.nginx.org/SimpleCGI>
+FCGI-Daemon run CGI scripts with RLIMITs and predefined number of workers.
+
+It was developed as replacement for cgiwrap-fcgi.pl (L<http://wiki.nginx.org/SimpleCGI>)
+and fcgiwrap (L<http://nginx.localdomain.pl/wiki/FcgiWrap>)
+
+Unlike fcgiwrap, FCGI-Daemon correctly passing STDERR to web server.
+
+FCGI-Daemon check for executable in path and correctly set PATH_INFO
+environment variable which is crucial for some CGI applications like 
+fossil (L<http://fossil-scm.org>). 
+(Lack of this functionality make cgiwrap-fcgi.pl unsuitable for some scripts.)
+
 
 =head1 FEATURES
 
-  * setrlimit for RLIMIT_AS and RLIMIT_CPU
-  * DOing .pl - run CGI scripts in Perl with persistent interpreter (like mod_perl).
-  * detection of memory leaks
-  * drop privileges when run as root
-  * detection of script executable in path (to run CGI apps like fossil)
+* drop privileges when run as root
+* setrlimit for RLIMIT_AS and RLIMIT_CPU
+* detection of script executable in path (PATH_INFO)
+* DOing .pl - run CGI scripts in Perl with persistent interpreter (like mod_perl).
+* detection of memory leaks
 
 =cut
 
@@ -289,7 +310,7 @@ It was developed as replacement for cgiwrap-fcgi.pl - see L<http://wiki.nginx.or
 It can be manually invoked as "perl /usr/share/perl5/FCGI/Daemon.pm"
 or with included SysV init script.
 
-Please make sure that user have write permissions for sock file.
+Please make sure that user should have write permissions for sock file.
 
 =head1 OPTIONS
 
@@ -301,12 +322,18 @@ Options: (default arguments given for convenience)
   -m 512                          # RLIMIT_AS in MiB (see setrlimit)
   -c 32                           # RLIMIT_CPU in seconds (see setrlimit)
   -e 10240                        # max evals before process restart. 0 disables DOing perl scripts.
+  -f \.pl                         # regex to match script file name
+                                   # script will be evaluated on match (if -e parameter allows)
+                                   # otherwise fallback to CGI exec mode.
+                                   # EXAMPLE: -f \.pl|perlcgi/[^/]+\.cgi
   -l 1.3                          # memory leak threshold
-  -p /var/run/fcgid.pid           # write pId (process ID) to given file (only if daemonize)
-  -s /var/run/fcgid.sock          # socket file for Fast CGI communication
+  -p /var/run/fcgi-daemon.pid     # write pId (process ID) to given file (only if daemonize)
+  -s /var/run/fcgi-daemon.sock    # socket file for Fast CGI communication
   -u www-data                     # user name to become (if run as root)
   -g www-data                     # group name to become (if run as root)
   -d                              # daemonize (run in background)
+
+All options are optional.
 
 =over 4
 
@@ -314,8 +341,19 @@ Options: (default arguments given for convenience)
 
 By default FCGI::Daemon DOing .pl scripts up to B<-e> times.
 This is several times faster than invoking Perl for every call of CGI script.
-This option define how often parent process should restart.
+This option define how often parent process (worker) should restart.
 Warning - some scripts may be incompatible with this so disable with "-e0" if necessary.
+
+=item B<-f>
+
+By default only .pl scripts executed by persistent interpreter.
+However some Perl scripts may have .cgi extension
+so to accelerate such scripts a following regex may be used:
+I<perlcgi/[^/]+\.cgi|\.pl>
+Where I<perlcgi> stand for path so not all .cgi will be treated as perl but
+only ones from I<perlcgi> folder (or from folder which name ends with perlcgi).
+This regex will be anchored to end of file name.
+
 
 =item B<-l>
 
@@ -339,32 +377,25 @@ libfcgi-procmanager-perl
 
 =head1 INSTALLATION
 
-On Debian GNU/Linux easiest way to install is to use packages
-available from L<http://sites.google.com/site/onlyjob/fcgi-daemon>
+To install this module, run the following commands:
+
+=over
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+=back
 
 =head1 COMPATIBILITY
 
-Tested only in GNU/Linux systems.
-Windows is NOT supported.
-
-=head1 NGINX configuration (sample)
-
- location ~ ^/(cgi-)?bin/.*$ {
-    expires epoch;
-    gzip off;
-    include /etc/nginx/fastcgi_params;
-    fastcgi_param   SCRIPT_FILENAME $request_filename;
-    fastcgi_pass    unix:/var/run/fcgid.sock;
- }
+Tested only on GNU/Linux systems.
+NOT tested and not expected to work on Windows.
 
 =head1 NOTES
 
-Perl scripts can cache persistent data in $_{$0}->{mydata}
-However if you store too much data it may trigger termination by rlimit
-After DO/EVAL $_{$0}->{'SIGTERM'} being called so termination handler
-can be used to close DB connections etc.
-
-$_{$0}->{'SIGTERM'}=sub { print "I closed my handles"; };
+Find init scripts and nginx configuration sniplets in examples/
 
 =head1 FAQ
 
@@ -389,7 +420,7 @@ Frankly, it is not very beautiful.
 
 =item - It takes no options so you have to modify the code.
 
-=item - It is incompatible with some CGI applications, notably with fossil.
+=item - It is incompatible with some CGI applications, notably with fossil due to lack of support for PATH_INFO
 
 =back
 
@@ -405,7 +436,7 @@ During development of this module a bug in Perl was discovered:
 
 =head1 SUPPORT
 
-You can find documentation for this module with the perldoc command.
+After installing, you can find documentation for this module with the perldoc command.
 
     perldoc FCGI::Daemon
 

@@ -1,7 +1,7 @@
 --- #YAML:1.0
 name:               FCGI-Daemon
-version:            0.20111014
-abstract:           an easy to use FastCGI daemon which can be used with nginx web server.
+version:            0.20111121
+abstract:           Perl-aware Fast CGI daemon for use with nginx web server.
 author:
     - Dmitry Smirnov <onlyjob@cpan.org>
 license:            AGPLv3
@@ -20,7 +20,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.56
+generated_by:       ExtUtils::MakeMaker version 6.57_05
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

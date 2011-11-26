@@ -1,7 +1,7 @@
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          fcgi-daemon
-# Required-Start:    $remote_fs $syslog
+# Required-Start:    $remote_fs $syslog $network
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
@@ -24,6 +24,8 @@ PERL="/usr/bin/perl"
 [ -e "$DAEMON" ] || exit 0
 [ -e "$PERL" ] || exit 0
 
+set -e
+
 DAEMON="$PERL $DAEMON"
 
 # Read configuration variable file if it is present
@@ -45,7 +47,8 @@ do_start()
     #   0 if daemon has been started
     #   1 if daemon was already running
     #   2 if daemon could not be started
-    start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $PERL --startas $DAEMON --test > /dev/null || ( log_warning_msg "$NAME is already running"; return 1 )
+    start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $PERL --startas $DAEMON --test > /dev/null \
+        || ( log_warning_msg ": $NAME is already running"; return 1 )
     start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $PERL --startas $DAEMON -- $DAEMON_OPTS || return 2
     sleep 1
 }
